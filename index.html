@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>VITALINK 初回登録</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 16px;
+      background: #f5f7f8;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        "Yu Gothic",
+        "Hiragino Kaku Gothic ProN",
+        Arial,
+        sans-serif;
+      color: #222;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 22px;
+      box-shadow: 0 3px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .lead {
+      margin: 0 0 28px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .required {
+      color: #d93025;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+
+    .optional {
+      color: #777;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 12px;
+      border: 1px solid #ccc;
+      border-radius: 9px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #555;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #submitButton {
+      background: #222;
+      color: #fff;
+    }
+
+    #submitButton:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #status {
+      display: none;
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 9px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #status.success {
+      display: block;
+      background: #eef8f0;
+      color: #246b35;
+    }
+
+    #status.error {
+      display: block;
+      background: #fff0f0;
+      color: #a12622;
+    }
+
+    #status.loading {
+      display: block;
+      background: #f2f4f5;
+      color: #555;
+    }
+
+    .notice {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card">
+
+    <h1>VITALINK 初回登録</h1>
+
+    <p class="lead">
+      VITALINKをご利用いただくため、<br>
+      最初に利用者情報をご登録ください。
+    </p>
+
+    <form id="registrationForm">
+
+      <div class="field">
+
+        <label for="fullName">
+          氏名（フルネーム）
+          <span class="required">必須</span>
+        </label>
+
+        <input
+          type="text"
+          id="fullName"
+          autocomplete="name"
+          placeholder="例：岩下 永輝"
+          required
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="department">
+          所属部署
+          <span class="required">必須</span>
+        </label>
+
+        <input
+          type="text"
+          id="department"
+          placeholder="例：営業部"
+          required
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="position">
+          役職
+          <span class="optional">任意</span>
+        </label>
+
+        <input
+          type="text"
+          id="position"
+          placeholder="例：部長"
+        >
+
+      </div>
+
+
+      <button
+        type="submit"
+        id="submitButton"
+      >
+        登録する
+      </button>
+
+    </form>
+
+
+    <div id="status"></div>
+
+
+    <div class="notice">
+      ご登録いただいた情報は、
+      VITALINKの利用者確認および
+      サービス提供・運用のために使用します。
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  /*
+   * ==========================================
+   * VITALINK 初回登録 設定
+   * ==========================================
+   */
+
+  const LIFF_ID =
+    '2011711561-H9yBzcPk';
+
+  const GAS_URL =
+    'https://script.google.com/macros/s/AKfycbyEDVJaSgK1mDSQ7WNOhALGeI9ySP3v1Kd1SmeISPsQyh8OBTOgJEHM8puR6Q8BuUT8/exec';
+
+
+  const form =
+    document.getElementById(
+      'registrationForm'
+    );
+
+  const submitButton =
+    document.getElementById(
+      'submitButton'
+    );
+
+  const statusBox =
+    document.getElementById(
+      'status'
+    );
+
+
+  /*
+   * ==========================================
+   * LIFF初期化
+   * ==========================================
+   */
+
+  async function initializeLiff() {
+
+    try {
+
+      setStatus(
+        'LINE認証を確認しています...',
+        'loading'
+      );
+
+
+      await liff.init({
+        liffId: LIFF_ID
+      });
+
+
+      /*
+       * LINEログインされていない場合
+       */
+
+      if (!liff.isLoggedIn()) {
+
+        liff.login({
+          redirectUri:
+            window.location.href
+        });
+
+        return;
+
+      }
+
+
+      /*
+       * IDトークン取得可能か確認
+       */
+
+      const idToken =
+        liff.getIDToken();
+
+
+      if (!idToken) {
+
+        throw new Error(
+          'LINE認証情報を取得できませんでした。'
+        );
+
+      }
+
+
+      clearStatus();
+
+
+    } catch (error) {
+
+      console.error(
+        'LIFF initialization error:',
+        error
+      );
+
+
+      setStatus(
+        'LINE認証に失敗しました。LINEからもう一度開いてください。',
+        'error'
+      );
+
+
+      submitButton.disabled =
+        true;
+
+    }
+
+  }
+
+
+  /*
+   * ==========================================
+   * 登録送信
+   * ==========================================
+   */
+
+  form.addEventListener(
+    'submit',
+    async function(event) {
+
+      event.preventDefault();
+
+
+      const fullName =
+        document
+          .getElementById(
+            'fullName'
+          )
+          .value
+          .trim();
+
+
+      const department =
+        document
+          .getElementById(
+            'department'
+          )
+          .value
+          .trim();
+
+
+      const position =
+        document
+          .getElementById(
+            'position'
+          )
+          .value
+          .trim();
+
+
+      if (!fullName) {
+
+        setStatus(
+          '氏名を入力してください。',
+          'error'
+        );
+
+        return;
+
+      }
+
+
+      if (!department) {
+
+        setStatus(
+          '所属部署を入力してください。',
+          'error'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        submitButton.disabled =
+          true;
+
+        submitButton.textContent =
+          '登録中...';
+
+
+        setStatus(
+          '登録処理を行っています...',
+          'loading'
+        );
+
+
+        /*
+         * 生のIDトークンを取得
+         *
+         * LINE User IDそのものを
+         * ブラウザからGASへ送らない。
+         */
+
+        const idToken =
+          liff.getIDToken();
+
+
+        if (!idToken) {
+
+          throw new Error(
+            'LINE認証情報を取得できませんでした。'
+          );
+
+        }
+
+
+        /*
+         * GASへ登録データ送信
+         */
+
+        const response =
+          await fetch(
+            GAS_URL,
+            {
+
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'text/plain;charset=utf-8'
+              },
+
+              body:
+                JSON.stringify({
+
+                  fullName:
+                    fullName,
+
+                  department:
+                    department,
+
+                  position:
+                    position,
+
+                  idToken:
+                    idToken
+
+                })
+
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            'サーバーとの通信に失敗しました。'
+          );
+
+        }
+
+
+        const result =
+          await response.json();
+
+
+        if (!result.ok) {
+
+          throw new Error(
+            result.message ||
+            '登録できませんでした。'
+          );
+
+        }
+
+
+        /*
+         * 登録成功
+         */
+
+        if (
+          result.alreadyRegistered
+        ) {
+
+          setStatus(
+            'すでに初回登録は完了しています。VITALINKをご利用いただけます。',
+            'success'
+          );
+
+        } else {
+
+          setStatus(
+            '登録が完了しました。VITALINKをご利用いただけます。',
+            'success'
+          );
+
+        }
+
+
+        /*
+         * 二重送信防止
+         */
+
+        form
+          .querySelectorAll(
+            'input'
+          )
+          .forEach(function(input) {
+
+            input.disabled =
+              true;
+
+          });
+
+
+        submitButton.textContent =
+          '登録完了';
+
+        submitButton.disabled =
+          true;
+
+
+      } catch (error) {
+
+        console.error(
+          'Registration error:',
+          error
+        );
+
+
+        setStatus(
+          error.message ||
+          '登録処理中にエラーが発生しました。',
+          'error'
+        );
+
+
+        submitButton.disabled =
+          false;
+
+        submitButton.textContent =
+          '登録する';
+
+      }
+
+    }
+  );
+
+
+  /*
+   * ==========================================
+   * 表示制御
+   * ==========================================
+   */
+
+  function setStatus(
+    message,
+    type
+  ) {
+
+    statusBox.textContent =
+      message;
+
+    statusBox.className =
+      type;
+
+  }
+
+
+  function clearStatus() {
+
+    statusBox.textContent =
+      '';
+
+    statusBox.className =
+      '';
+
+  }
+
+
+  /*
+   * ==========================================
+   * 起動
+   * ==========================================
+   */
+
+  initializeLiff();
+
+</script>
+
+</body>
+</html>
